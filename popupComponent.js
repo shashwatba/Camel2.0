@@ -27,8 +27,9 @@ function showQuizPopup(quizData) {
         max-width: 600px;
         max-height: 80vh;
         overflow-y : auto;
-        font-family: 'Segoe UI', sans-serif;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.3);">
+        font-family: 'Georgia', serif;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        border: 3px solid rgb(130, 162, 232);">
 
 
         <!-- Question text -->
@@ -46,7 +47,7 @@ function showQuizPopup(quizData) {
         <button id="submit-answer" style="
           margin-top: 10px;
           padding: 8px 12px;
-          background:rgb(102, 182, 106);
+          background:rgb(130, 162, 232);
           color: white;
           border: none;
           border-radius: 4px;
@@ -98,7 +99,7 @@ function showQuizPopup(quizData) {
 
       // Show feedback text returned by backend (e.g., "Correct!" or explanation)
       feedbackEl.textContent = data.feedback;
-      feedbackEl.style.color = "black";
+      feedbackEl.style.color = "blue";
 
       // Auto-close the popup after 25 seconds
       setTimeout(() => {
