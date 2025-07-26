@@ -1,6 +1,6 @@
 # 🐫 Camel: Browser Plugin to Learn Instead of Lookup
 
-CamelTutor is a browser extension inspired by [Camel2.0](https://github.com/shashwatba/Camel2.0) that intercepts your AI-related queries and turns them into *teachable moments*.
+Camelis a browser extension that intercepts your AI-related queries and turns them into *teachable moments*.
 
 Instead of giving you direct answers from ChatGPT, Bard, or other LLMs, CamelTutor asks questions back, coaches you through the concepts (e.g., SQL, Python, ML), and helps you grow your skills.
 
