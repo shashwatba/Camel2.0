@@ -23,7 +23,7 @@ app.add_middleware(
 
 # Initialize OpenAI client
 # Make sure to set your OPENAI_API_KEY environment variable
-openai_client = OpenAI(os.getenv("OPENAI_API_KEY"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Pydantic models for request/response validation
 class LearningTopicsRequest(BaseModel):
