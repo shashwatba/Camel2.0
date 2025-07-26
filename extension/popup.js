@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             // Call the FastAPI backend to generate keywords
+
+            const selectedFormat = formatSelector.value;
+            await chrome.storage.local.set({ quizFormat: selectedFormat });
+            
             const response = await fetch(`${API_BASE_URL}/generate-keywords`, {
                 method: 'POST',
                 headers: {
