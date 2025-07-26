@@ -3,6 +3,21 @@
 const API_BASE_URL = 'http://localhost:8000';
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    const difficultySlider = document.getElementById('difficulty-slider');
+const difficultyLabel = document.getElementById('difficulty-label');
+
+difficultySlider.addEventListener('input', () => {
+    const value = difficultySlider.value;
+    if (value === '1') {
+        difficultyLabel.textContent = 'Small';
+    } else if (value === '2') {
+        difficultyLabel.textContent = 'Medium';
+    } else {
+        difficultyLabel.textContent = 'Large';
+    }
+});
+    
     const topicInput = document.getElementById('topic-input');
     const startButton = document.getElementById('start-tracking');
     const statusDiv = document.getElementById('status');
