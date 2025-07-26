@@ -54,7 +54,8 @@ function checkTextForKeywords(text) {
                     action: 'keywordFound',
                     topic: topicData.name,
                     keyword: keyword,
-                    count: matches.length
+                    count: matches.length,
+                    format: selectedFormat
                 });
             }
         });
