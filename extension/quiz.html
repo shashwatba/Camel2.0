@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Learning Quiz</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .topic-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .keyword-info {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .question-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .question {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .answer-section {
+            display: none;
+        }
+        
+        .answer-box {
+            background: #e8f5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .answer {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #2e7d32;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .show-answer-btn {
+            background: #667eea;
+            color: white;
+        }
+        
+        .show-answer-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .close-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .close-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .success-message {
+            text-align: center;
+            color: #4CAF50;
+            font-weight: 600;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .learning-tip {
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tip-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>🎯 Quick Learning Check!</h1>
+        
+        <div style="text-align: center;">
+            <span class="topic-badge" id="topic-badge">Loading...</span>
+        </div>
+        
+        <div class="keyword-info">
+            You've encountered "<span id="keyword-name"></span>" multiple times. Let's test your understanding!
+        </div>
+        
+        <div class="question-box">
+            <div class="question" id="question-text">Loading question...</div>
+        </div>
+        
+        <div class="answer-section" id="answer-section">
+            <div class="answer-box">
+                <div class="answer" id="answer-text"></div>
+            </div>
+            <div class="success-message">✅ Great job reviewing this concept!</div>
+        </div>
+        
+        <div class="button-group">
+            <button class="show-answer-btn" id="show-answer-btn">Show Answer</button>
+            <button class="close-btn" id="close-btn">Close</button>
+        </div>
+        
+        <div class="learning-tip">
+            <span class="tip-icon">💡</span>
+            <span>This quiz appears when you encounter important keywords frequently while browsing.</span>
+        </div>
+    </div>
+    
+    <script src="quiz.js"></script>
+</body>
+</html>
