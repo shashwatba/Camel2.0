@@ -55,3 +55,6 @@ CamelTutor responds:
 ```bash
 git clone https://github.com/your-username/CamelTutor.git
 cd CamelTutor
+
+
+Made for Forgehack 2025 byShashwat Bansal, Mahi Gupta, Alexis Manyrath, Jun Park
