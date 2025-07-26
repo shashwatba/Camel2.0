@@ -50,6 +50,8 @@ function checkTextForKeywords(text) {
             const matches = lowerText.match(regex);
             if (matches && matches.length > 0) {
                 // Notify background script about keyword found
+                chrome.storage.local.get(['quizFormat'], (result) => {
+                const selectedFormat = result.quizFormat || 'multiple-choice';
                 chrome.runtime.sendMessage({
                     action: 'keywordFound',
                     topic: topicData.name,
