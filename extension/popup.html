@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        
         body {
             width: 350px;
             min-height: 400px;
@@ -145,11 +146,18 @@
         .clear-btn:hover {
             background: #f44336;
         }
+
+        input[type="range"] {
+        width: 100%;
+        margin-top: 5px;
+        accent-color: #4CAF50;
+        }
+        
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎓 Learning Tracker</h1>
+        <h1>Camel Tutor</h1>
         
         <div class="input-section">
             <label for="topic-input">What are you trying to learn?</label>
@@ -160,6 +168,10 @@
                 <option value="multiple-choice">Multiple Choice</option>
                 <option value="free-response">Free Response</option>
             </select>
+            
+        <label for="difficulty-slider">Select Difficulty:</label>
+        <input type="range" id="difficulty-slider" min="1" max="3" value="2">
+        <div id="difficulty-label" style="text-align: center; margin-bottom: 15px;">Medium</div>
             
             <button id="start-tracking">Start Tracking</button>
         </div>
