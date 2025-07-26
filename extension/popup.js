@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://localhost:8000';
 document.addEventListener('DOMContentLoaded', async () => {
     const topicInput = document.getElementById('topic-input');
     const startButton = document.getElementById('start-tracking');
+    const formatSelector = document.getElementById('quiz-format');
     const statusDiv = document.getElementById('status');
     const topicsListDiv = document.getElementById('topics-list');
     const trackingInfoDiv = document.getElementById('tracking-info');
