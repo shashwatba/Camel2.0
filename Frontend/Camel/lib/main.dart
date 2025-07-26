@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:camel/classes.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 void main() => runApp(MyApp());
@@ -178,41 +180,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
               TagContainer(text: card.keyword, isForgot: false),
               SizedBox(height: 10),
               // Summary 강조용 박스
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.yellow[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+              // Container(
+              //   padding: EdgeInsets.all(10),
+              //   decoration: BoxDecoration(
+              //     color: Colors.yellow[100],
+              //     borderRadius: BorderRadius.circular(8),
+              //   ),
+              // ),
 
               SizedBox(height: 10),
-
-              ListView.builder(
-                itemCount: card.questions.length,
-                itemBuilder: (context, index) {
-                  final question = card.questions[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Q${index + 1}: ${question.text??''}",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+              Container(
+                height: 300,
+                child:  ListView.builder(
+                  itemCount: card.questions.length,
+                  itemBuilder: (context, index) {
+                    final question = card.questions[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                  );
-                },
-              )
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Q${index + 1}: ${question.question ?? ''}",
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            ...List.generate(4, (i) {
+                              final choices = [question.choice1, question.choice2, question.choice3, question.choice4];
+                              final labels = ['A', 'B', 'C', 'D'];
+                              final isCorrect = labels[i] == question.correct;
+
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isCorrect ? Colors.green : Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "${i + 1}: ${choices[i] ?? ''}",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: isCorrect ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                    );
+
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -256,28 +285,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text('What You Learned Today', style: sectionTitleStyle),
                   SizedBox(height: 16),
-                  // SizedBox(
-                  //   height: 200,
-                  //   child: Scrollbar(
-                  //     controller: _scrollController,
-                  //     thumbVisibility: true,
-                  //     child: SizedBox(
-                  //       height: 200,
-                  //       child: ListView.builder(
-                  //         controller: _scrollController,
-                  //         scrollDirection: Axis.horizontal,
-                  //         itemCount: whatYouLearned.length,
-                  //         itemBuilder: (ctx, i) {
-                  //           final item = whatYouLearned[i];
-                  //           return GestureDetector(
-                  //             onTap: () => showSimpleCardDetail(context, item),
-                  //             child: KnowledgeCard(item: item),
-                  //           );
-                  //         },
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
+                  SizedBox(
+                    height: 200,
+                    child: Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      child: SizedBox(
+                        height: 200,
+                        child: FutureBuilder<QuizHistoryResponse>(
+                          future: fetchQuizHistory(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData) {
+                              return const Center(child: Text('No items found'));
+                            }
+
+                            final quizzes = snapshot.data!.quizzes;
+
+                            final today = DateTime.now();
+
+                            final todayQuizzes = quizzes.where((item) {
+                              final generatedDate = DateTime.parse(item.generatedAt).toLocal();
+                              return generatedDate.year == today.year &&
+                                  generatedDate.month == today.month &&
+                                  generatedDate.day == today.day;
+                            }).toList();
+
+                            return ListView.builder(
+                              controller: _scrollController,
+                              scrollDirection: Axis.horizontal,
+                              itemCount: todayQuizzes.length,
+                              itemBuilder: (ctx, i) {
+                                final item = todayQuizzes[i];
+                                return GestureDetector(
+                                  onTap: () => showSimpleCardDetail(context, item),
+                                  child: KnowledgeCard(item: item, isForgot: false),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 24),
                   Text('You Might Forget This', style: sectionTitleStyle),
                   SizedBox(height: 16),
@@ -301,14 +354,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                             final quizzes = snapshot.data!.quizzes;
 
+                            final today = DateTime.now();
 
+                            final oldQuizzes = quizzes.where((item) {
+                              final generatedDate = DateTime.parse(item.generatedAt).toLocal();
+                              return generatedDate.day == today.day;
+                            }).toList();
 
                             return ListView.builder(
                               controller: _forgetScrollController,
                               scrollDirection: Axis.horizontal,
-                              itemCount: quizzes.length,
+                              itemCount: oldQuizzes.length,
                               itemBuilder: (ctx, i) {
-                                final item = quizzes[i];
+                                final item = oldQuizzes[i];
                                 return GestureDetector(
                                   onTap: () => showSimpleCardDetail(context, item),
                                   child: KnowledgeCard(item: item, isForgot: true),
@@ -317,7 +375,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           },
                         ),
-
                       ),
                     ),
                   ),
@@ -393,6 +450,17 @@ class KnowledgeCard extends StatelessWidget {
   final SavedQuiz item;
   final bool isForgot;
 
+  String timeAgo(String isoString) {
+    final DateTime postTime = DateTime.parse(isoString).toLocal(); // local로 변환
+    final DateTime now = DateTime.now();
+    final Duration diff = now.difference(postTime);
+
+    if (diff.inSeconds < 60) return '${diff.inSeconds} seconds ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    return DateFormat('yyyy-MM-dd HH:mm').format(postTime); // 너무 오래됐으면 날짜 출력
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -413,7 +481,7 @@ class KnowledgeCard extends StatelessWidget {
             TagContainer(text: item.keyword, isForgot: isForgot),
             Spacer(),
             Text(
-              item.generatedAt,
+              timeAgo(item.generatedAt),
               style: TextStyle(color: Colors.grey[800], fontSize: 12),
             ),
           ],

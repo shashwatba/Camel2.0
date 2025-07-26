@@ -1,16 +1,38 @@
 class Question {
-  final String id;
-  final String text;
+  final String question;
+  final String choice1;
+  final String choice2;
+  final String choice3;
+  final String choice4;
+  final String correct;
+  final String keyword;
+  final String difficulty;
 
-  Question({required this.id, required this.text});
+  Question({
+    required this.question,
+    required this.choice1,
+    required this.choice2,
+    required this.choice3,
+    required this.choice4,
+    required this.correct,
+    required this.keyword,
+    required this.difficulty,
+  });
 
   factory Question.fromJson(Map<String, dynamic> json) {
     return Question(
-      id: json['id'] ?? '',
-      text: json['text'] ?? '',
+      question: json['question'] ?? '',
+      choice1: json['choice1'] ?? '',
+      choice2: json['choice2'] ?? '',
+      choice3: json['choice3'] ?? '',
+      choice4: json['choice4'] ?? '',
+      correct: json['correct'] ?? '',
+      keyword: json['keyword'] ?? '',
+      difficulty: json['difficulty'] ?? '',
     );
   }
 }
+
 
 class UserAnswer {
   final String questionId;
@@ -61,7 +83,7 @@ class SavedQuiz {
       userAnswers: userAnswersJson.map((a) => UserAnswer.fromJson(a)).toList(),
       generatedAt: json['generated_at'] ?? '',
       completedAt: json['completed_at'],
-      score: json['score'],
+      score: json['score']??0,
       totalQuestions: json['total_questions'] ?? 0,
     );
   }
