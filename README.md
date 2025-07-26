@@ -1,6 +1,6 @@
 # 🐫 Camel: Browser Plugin to Learn Instead of Lookup
 
-Camelis a browser extension that intercepts your AI-related queries and turns them into *teachable moments*.
+Camel is a browser extension that intercepts your AI-related queries and turns them into *teachable moments*.
 
 Instead of giving you direct answers from ChatGPT, Bard, or other LLMs, CamelTutor asks questions back, coaches you through the concepts (e.g., SQL, Python, ML), and helps you grow your skills.
 
@@ -58,3 +58,8 @@ cd CamelTutor
 
 
 Made for Forgehack 2025 byShashwat Bansal, Mahi Gupta, Alexis Manyrath, Jun Park
+
+Presentation[https://www.canva.com/design/DAGuS_HZzqE/3qBnQUgEkx6IcHFpBOdP_g/edit?utm_content=DAGuS_HZzqE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton]
+Notion[https://www.notion.so/Project-Overview-23c76236c50580fdb14bdf83304c6f8e]
+
+
