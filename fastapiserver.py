@@ -35,10 +35,15 @@ class KeywordsByTopicResponse(BaseModel):
 class QuizRequest(BaseModel):
     topic: str  # The topic to generate quiz for
     keywords: List[str]  # Keywords for that topic
+    difficulty: str = "medium"  # Can be "small" (easy), "medium", or "big" (hard)
 
 class Question(BaseModel):
     question: str
-    answer: str
+    choice1: str
+    choice2: str
+    choice3: str
+    choice4: str
+    correct: str  # Will be "A", "B", "C", or "D"
     keyword: str
     difficulty: str = "medium"
 
@@ -86,39 +91,55 @@ Example format: keyword1, keyword2, keyword3, etc."""
         # Fallback to basic keywords if OpenAI fails
         return [f"{topic}_concept", f"{topic}_basics", f"{topic}_fundamentals"]
 
-async def generate_quiz_with_openai(topic: str, keywords: List[str]) -> List[Question]:
+async def generate_quiz_with_openai(topic: str, keywords: List[str], difficulty: str = "medium") -> List[Question]:
     """
-    Generate quiz questions and answers based on topic and keywords using OpenAI API.
+    Generate multiple choice quiz questions based on topic and keywords using OpenAI API.
     """
     try:
         keywords_str = ", ".join(keywords)
         
-        prompt = f"""Create a quiz about "{topic}" focusing on these keywords: {keywords_str}
+        # Set difficulty instruction based on input
+        if difficulty == "big":
+            difficulty_instruction = "The question should be hard/difficult and take some thought to solve. Give some context for the question."
+        elif difficulty == "small":
+            difficulty_instruction = "The question should be simple and easy to answer."
+        else:  # medium
+            difficulty_instruction = "The question should be medium difficulty."
+        
+        prompt = f"""You are a kind and curious tutor that helps the user learn {topic}.
+You never give the full answer immediately. Create multiple choice quiz questions about "{topic}" focusing on these keywords: {keywords_str}
 
-Generate 5-8 questions that test understanding of these keywords in the context of {topic}. 
+{difficulty_instruction}
 
-For each question, provide:
-1. A clear, specific question
-2. A comprehensive answer
-3. Which keyword it primarily relates to
+Generate 3-5 multiple choice questions. Each question should have 4 answer choices.
 
 Format your response as a JSON array like this:
 [
   {{
-    "question": "What is...",
-    "answer": "Detailed answer explaining...",
+    "question": "The quiz question text here?",
+    "choice1": "First answer option text",
+    "choice2": "Second answer option text", 
+    "choice3": "Third answer option text",
+    "choice4": "Fourth answer option text",
+    "correct": "A",
     "keyword": "relevant_keyword",
-    "difficulty": "medium"
+    "difficulty": "{difficulty}"
   }},
   ...
 ]
 
-Make sure questions are educational and test real understanding, not just memorization."""
+Important:
+- The question should test understanding of the keyword in context
+- choice1 through choice4 should contain ONLY the answer text (no A, B, C, D labels)
+- correct should be the letter (A, B, C, or D) of the correct answer
+- choice1 corresponds to A, choice2 to B, choice3 to C, choice4 to D
+- Make the incorrect options plausible but clearly wrong
+- Questions should be educational and test real understanding"""
 
         response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are an expert educator who creates comprehensive quizzes. Always respond with valid JSON."},
+                {"role": "system", "content": "You are an expert educator who creates comprehensive multiple choice quizzes. Always respond with valid JSON."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=2000,
@@ -139,28 +160,40 @@ Make sure questions are educational and test real understanding, not just memori
                 
             questions.append(Question(
                 question=q_data["question"],
-                answer=q_data["answer"],
+                choice1=q_data["choice1"],
+                choice2=q_data["choice2"],
+                choice3=q_data["choice3"],
+                choice4=q_data["choice4"],
+                correct=q_data["correct"],
                 keyword=keyword,
-                difficulty=q_data.get("difficulty", "medium")
+                difficulty=q_data.get("difficulty", difficulty)
             ))
         
         return questions
         
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON from OpenAI response: {str(e)}")
-        # Fallback questions
+        # Fallback question
         return [Question(
-            question=f"What are the key concepts to understand about {topic}?",
-            answer=f"The key concepts include: {', '.join(keywords[:3])} and their practical applications.",
+            question=f"What is the most important concept to understand about {topic}?",
+            choice1=f"Understanding {keywords[0] if keywords else topic}",
+            choice2="Memorizing syntax without understanding",
+            choice3="Copying code from tutorials",
+            choice4="Avoiding documentation",
+            correct="A",
             keyword=keywords[0] if keywords else "general",
             difficulty="medium"
         )]
     except Exception as e:
         print(f"Error generating quiz for {topic}: {str(e)}")
-        # Fallback questions
+        # Fallback question
         return [Question(
-            question=f"What should someone know about {topic}?",
-            answer=f"Understanding {topic} involves learning about {', '.join(keywords[:3])} and their applications.",
+            question=f"Which of these is most relevant to {topic}?",
+            choice1=f"{keywords[0] if keywords else topic} concepts",
+            choice2="Unrelated programming concepts",
+            choice3="Hardware specifications",
+            choice4="None of the above",
+            correct="A",
             keyword=keywords[0] if keywords else "general",
             difficulty="medium"
         )]
@@ -217,7 +250,7 @@ async def generate_quiz(request: QuizRequest):
             raise HTTPException(status_code=400, detail="No keywords provided")
         
         # Generate questions using OpenAI
-        questions = await generate_quiz_with_openai(request.topic, request.keywords)
+        questions = await generate_quiz_with_openai(request.topic, request.keywords, request.difficulty)
         
         if not questions:
             raise HTTPException(status_code=400, detail="No questions could be generated")

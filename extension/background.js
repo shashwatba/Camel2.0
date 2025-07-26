@@ -45,6 +45,18 @@ async function handleKeywordFound(topic, keyword, tabId) {
 // Generate quiz and show it to the user
 async function generateAndShowQuiz(topic, keyword, tabId) {
     try {
+        // Determine difficulty based on how many times the keyword has been seen
+        const storage = await chrome.storage.local.get(['learningTopics']);
+        const topics = storage.learningTopics || {};
+        const count = topics[topic]?.keywordCounts[keyword] || 0;
+        
+        let difficulty = "medium";
+        if (count >= 15) {
+            difficulty = "big";  // Hard questions after seeing keyword 15+ times
+        } else if (count <= 5) {
+            difficulty = "small";  // Easy questions for first encounters
+        }
+        
         // Call the FastAPI backend to generate a quiz
         const response = await fetch(`${API_BASE_URL}/generate-quiz`, {
             method: 'POST',
@@ -53,7 +65,8 @@ async function generateAndShowQuiz(topic, keyword, tabId) {
             },
             body: JSON.stringify({
                 topic: topic,
-                keywords: [keyword]
+                keywords: [keyword],
+                difficulty: difficulty
             })
         });
         

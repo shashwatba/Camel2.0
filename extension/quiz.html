@@ -19,7 +19,7 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 450px;
+            max-width: 500px;
             width: 100%;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             animation: slideIn 0.3s ease-out;
@@ -76,22 +76,82 @@
             font-weight: 500;
         }
         
-        .answer-section {
-            display: none;
+        .choices-container {
+            margin: 20px 0;
         }
         
-        .answer-box {
+        .choice {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 15px;
+            position: relative;
+        }
+        
+        .choice:hover:not(.disabled) {
             background: #e8f5e9;
+            border-color: #4CAF50;
+            transform: translateX(5px);
+        }
+        
+        .choice.selected {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .choice.correct {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+            color: #2e7d32;
+        }
+        
+        .choice.incorrect {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        .choice.disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        
+        .choice-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-right: 10px;
+        }
+        
+        .feedback-section {
+            display: none;
+            background: #f0f4ff;
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #667eea;
         }
         
-        .answer {
+        .feedback-section.correct {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+        }
+        
+        .feedback-section.incorrect {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        
+        .feedback-text {
             font-size: 15px;
             line-height: 1.6;
-            color: #2e7d32;
+            color: #333;
         }
         
         .button-group {
@@ -111,15 +171,21 @@
             transition: all 0.3s;
         }
         
-        .show-answer-btn {
+        .submit-btn {
             background: #667eea;
             color: white;
         }
         
-        .show-answer-btn:hover {
+        .submit-btn:hover:not(:disabled) {
             background: #5a67d8;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .close-btn {
@@ -131,12 +197,16 @@
             background: #d0d0d0;
         }
         
-        .success-message {
-            text-align: center;
-            color: #4CAF50;
-            font-weight: 600;
-            margin-top: 20px;
+        .next-btn {
+            background: #4CAF50;
+            color: white;
             display: none;
+        }
+        
+        .next-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         }
         
         .learning-tip {
@@ -154,10 +224,26 @@
         .tip-icon {
             font-size: 20px;
         }
+        
+        .score-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f0f0f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="quiz-container">
+        <div class="score-badge" id="score-badge" style="display: none;">
+            Score: <span id="score">0</span>/<span id="total">0</span>
+        </div>
+        
         <h1>🎯 Quick Learning Check!</h1>
         
         <div style="text-align: center;">
@@ -172,21 +258,23 @@
             <div class="question" id="question-text">Loading question...</div>
         </div>
         
-        <div class="answer-section" id="answer-section">
-            <div class="answer-box">
-                <div class="answer" id="answer-text"></div>
-            </div>
-            <div class="success-message">✅ Great job reviewing this concept!</div>
+        <div class="choices-container" id="choices-container">
+            <!-- Choices will be dynamically inserted here -->
+        </div>
+        
+        <div class="feedback-section" id="feedback-section">
+            <div class="feedback-text" id="feedback-text"></div>
         </div>
         
         <div class="button-group">
-            <button class="show-answer-btn" id="show-answer-btn">Show Answer</button>
+            <button class="submit-btn" id="submit-btn">Submit Answer</button>
+            <button class="next-btn" id="next-btn">Next Question</button>
             <button class="close-btn" id="close-btn">Close</button>
         </div>
         
         <div class="learning-tip">
             <span class="tip-icon">💡</span>
-            <span>This quiz appears when you encounter important keywords frequently while browsing.</span>
+            <span>Take your time to think through each option before selecting your answer.</span>
         </div>
     </div>
     
