@@ -55,9 +55,10 @@ CamelTutor responds:
 ```bash
 git clone https://github.com/your-username/CamelTutor.git
 cd CamelTutor
+```
 
 
-Made for Forgehack 2025 byShashwat Bansal, Mahi Gupta, Alexis Manyrath, Jun Park
+Made for Forgehack 2025 by Shashwat Bansal, Mahi Gupta, Alexis Manyrath, Jun Park
 
 Presentation[https://www.canva.com/design/DAGuS_HZzqE/3qBnQUgEkx6IcHFpBOdP_g/edit?utm_content=DAGuS_HZzqE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton]
 Notion[https://www.notion.so/Project-Overview-23c76236c50580fdb14bdf83304c6f8e]
