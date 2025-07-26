@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 import os
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -24,6 +25,13 @@ app.add_middleware(
 # Initialize OpenAI client
 # Make sure to set your OPENAI_API_KEY environment variable
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Create data directory for storing quiz data
+DATA_DIR = "quiz_data"
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+QUIZ_HISTORY_FILE = os.path.join(DATA_DIR, "quiz_history.json")
 
 # Pydantic models for request/response validation
 class LearningTopicsRequest(BaseModel):
@@ -51,6 +59,72 @@ class QuizResponse(BaseModel):
     topic: str
     questions: List[Question]
     generated_at: str
+    quiz_id: str  # Add unique ID for each quiz
+
+class UserAnswer(BaseModel):
+    question_index: int
+    selected_answer: str  # "A", "B", "C", or "D"
+    is_correct: bool
+
+class QuizSubmission(BaseModel):
+    quiz_id: str
+    topic: str
+    keyword: str  # The keyword that triggered the quiz
+    user_answers: List[UserAnswer]
+    completed_at: str
+
+class SavedQuiz(BaseModel):
+    quiz_id: str
+    topic: str
+    keyword: str
+    questions: List[Question]
+    user_answers: List[UserAnswer]
+    generated_at: str
+    completed_at: Optional[str] = None
+    score: Optional[int] = None
+    total_questions: int
+
+class QuizHistoryResponse(BaseModel):
+    quizzes: List[SavedQuiz]
+    total_count: int
+
+def load_quiz_history() -> List[Dict]:
+    """Load quiz history from JSON file"""
+    try:
+        if os.path.exists(QUIZ_HISTORY_FILE):
+            with open(QUIZ_HISTORY_FILE, 'r') as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        print(f"Error loading quiz history: {str(e)}")
+        return []
+
+def save_quiz_history(quizzes: List[Dict]):
+    """Save quiz history to JSON file"""
+    try:
+        with open(QUIZ_HISTORY_FILE, 'w') as f:
+            json.dump(quizzes, f, indent=2)
+    except Exception as e:
+        print(f"Error saving quiz history: {str(e)}")
+
+def save_quiz_to_history(quiz_data: Dict):
+    """Add a new quiz to the history"""
+    history = load_quiz_history()
+    history.append(quiz_data)
+    save_quiz_history(history)
+
+def update_quiz_submission(quiz_id: str, submission: QuizSubmission):
+    """Update quiz with user answers and completion data"""
+    history = load_quiz_history()
+    
+    for quiz in history:
+        if quiz.get('quiz_id') == quiz_id:
+            quiz['user_answers'] = [answer.dict() for answer in submission.user_answers]
+            quiz['completed_at'] = submission.completed_at
+            quiz['score'] = sum(1 for answer in submission.user_answers if answer.is_correct)
+            break
+    
+    save_quiz_history(history)
 
 async def generate_keywords_with_openai(topic: str) -> List[str]:
     """
@@ -238,6 +312,7 @@ async def generate_keywords(request: LearningTopicsRequest):
 async def generate_quiz(request: QuizRequest):
     """
     Generate quiz questions for a specific topic and its keywords using OpenAI API.
+    Each quiz is automatically saved to the history file.
     """
     try:
         if not openai_client.api_key:
@@ -249,22 +324,183 @@ async def generate_quiz(request: QuizRequest):
         if not request.keywords:
             raise HTTPException(status_code=400, detail="No keywords provided")
         
+        # Generate unique quiz ID
+        quiz_id = str(uuid.uuid4())
+        
         # Generate questions using OpenAI
         questions = await generate_quiz_with_openai(request.topic, request.keywords, request.difficulty)
         
         if not questions:
             raise HTTPException(status_code=400, detail="No questions could be generated")
         
+        # Create quiz data for saving
+        generated_at = datetime.now().isoformat()
+        quiz_data = {
+            "quiz_id": quiz_id,
+            "topic": request.topic,
+            "keyword": request.keywords[0] if request.keywords else "general",  # Use first keyword as trigger
+            "questions": [question.dict() for question in questions],
+            "user_answers": [],  # Will be filled when user submits answers
+            "generated_at": generated_at,
+            "completed_at": None,
+            "score": None,
+            "total_questions": len(questions)
+        }
+        
+        # Save quiz to history
+        save_quiz_to_history(quiz_data)
+        
         return QuizResponse(
             topic=request.topic,
             questions=questions,
-            generated_at=datetime.now().isoformat()
+            generated_at=generated_at,
+            quiz_id=quiz_id
         )
     
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating quiz: {str(e)}")
+
+@app.post("/submit-quiz")
+async def submit_quiz(submission: QuizSubmission):
+    """
+    Submit user answers for a quiz and update the saved quiz data.
+    """
+    try:
+        # Update the quiz with user answers
+        update_quiz_submission(submission.quiz_id, submission)
+        
+        return {
+            "message": "Quiz submission saved successfully",
+            "quiz_id": submission.quiz_id,
+            "score": submission.user_answers and sum(1 for answer in submission.user_answers if answer.is_correct),
+            "total": len(submission.user_answers) if submission.user_answers else 0
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error submitting quiz: {str(e)}")
+
+@app.get("/quiz-history", response_model=QuizHistoryResponse)
+async def get_quiz_history():
+    """
+    Get all saved quiz history for the Flutter frontend.
+    Returns all quizzes with their questions and user responses.
+    """
+    try:
+        history_data = load_quiz_history()
+        
+        saved_quizzes = []
+        for quiz_data in history_data:
+            # Convert dict back to SavedQuiz model
+            saved_quiz = SavedQuiz(
+                quiz_id=quiz_data.get("quiz_id", ""),
+                topic=quiz_data.get("topic", ""),
+                keyword=quiz_data.get("keyword", ""),
+                questions=[Question(**q) for q in quiz_data.get("questions", [])],
+                user_answers=[UserAnswer(**a) for a in quiz_data.get("user_answers", [])],
+                generated_at=quiz_data.get("generated_at", ""),
+                completed_at=quiz_data.get("completed_at"),
+                score=quiz_data.get("score"),
+                total_questions=quiz_data.get("total_questions", 0)
+            )
+            saved_quizzes.append(saved_quiz)
+        
+        return QuizHistoryResponse(
+            quizzes=saved_quizzes,
+            total_count=len(saved_quizzes)
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving quiz history: {str(e)}")
+
+@app.get("/quiz-history/{quiz_id}")
+async def get_quiz_by_id(quiz_id: str):
+    """
+    Get a specific quiz by its ID.
+    """
+    try:
+        history_data = load_quiz_history()
+        
+        for quiz_data in history_data:
+            if quiz_data.get("quiz_id") == quiz_id:
+                return SavedQuiz(
+                    quiz_id=quiz_data.get("quiz_id", ""),
+                    topic=quiz_data.get("topic", ""),
+                    keyword=quiz_data.get("keyword", ""),
+                    questions=[Question(**q) for q in quiz_data.get("questions", [])],
+                    user_answers=[UserAnswer(**a) for a in quiz_data.get("user_answers", [])],
+                    generated_at=quiz_data.get("generated_at", ""),
+                    completed_at=quiz_data.get("completed_at"),
+                    score=quiz_data.get("score"),
+                    total_questions=quiz_data.get("total_questions", 0)
+                )
+        
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving quiz: {str(e)}")
+
+@app.delete("/quiz-history/{quiz_id}")
+async def delete_quiz(quiz_id: str):
+    """
+    Delete a specific quiz from history.
+    """
+    try:
+        history_data = load_quiz_history()
+        original_length = len(history_data)
+        
+        # Filter out the quiz with the specified ID
+        history_data = [quiz for quiz in history_data if quiz.get("quiz_id") != quiz_id]
+        
+        if len(history_data) == original_length:
+            raise HTTPException(status_code=404, detail="Quiz not found")
+        
+        save_quiz_history(history_data)
+        
+        return {"message": "Quiz deleted successfully", "quiz_id": quiz_id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting quiz: {str(e)}")
+
+@app.get("/quiz-stats")
+async def get_quiz_stats():
+    """
+    Get quiz statistics for analytics.
+    """
+    try:
+        history_data = load_quiz_history()
+        
+        total_quizzes = len(history_data)
+        completed_quizzes = len([q for q in history_data if q.get("completed_at")])
+        
+        # Calculate average score for completed quizzes
+        completed_with_scores = [q for q in history_data if q.get("score") is not None and q.get("total_questions", 0) > 0]
+        avg_score_percentage = 0
+        if completed_with_scores:
+            total_percentage = sum((q["score"] / q["total_questions"]) * 100 for q in completed_with_scores)
+            avg_score_percentage = total_percentage / len(completed_with_scores)
+        
+        # Topic breakdown
+        topic_counts = {}
+        for quiz in history_data:
+            topic = quiz.get("topic", "Unknown")
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+        
+        return {
+            "total_quizzes": total_quizzes,
+            "completed_quizzes": completed_quizzes,
+            "pending_quizzes": total_quizzes - completed_quizzes,
+            "average_score_percentage": round(avg_score_percentage, 2),
+            "topics": topic_counts
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving quiz stats: {str(e)}")
 
 @app.get("/health")
 async def health_check():
