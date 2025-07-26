@@ -1,3 +1,5 @@
 venv/
 .env
 env
+quiz_data
+quiz_data/
