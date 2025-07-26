@@ -9,11 +9,11 @@ const difficultyLabel = document.getElementById('difficulty-label');
 difficultySlider.addEventListener('input', () => {
     const value = difficultySlider.value;
     if (value === '1') {
-        difficultyLabel.textContent = 'Easy';
+        difficultyLabel.textContent = 'Small';
     } else if (value === '2') {
         difficultyLabel.textContent = 'Medium';
     } else {
-        difficultyLabel.textContent = 'Hard';
+        difficultyLabel.textContent = 'Large';
     }
 });
     const topicInput = document.getElementById('topic-input');
