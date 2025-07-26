@@ -13,7 +13,7 @@ function showQuizPopup(quizData) {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);               /* dark overlay background */
+      background: rgb(10, 11, 39);               /* dark overlay background */
       z-index: 9999;
       display: flex;
       align-items: center;
@@ -29,7 +29,7 @@ function showQuizPopup(quizData) {
         overflow-y : auto;
         font-family: 'Georgia', serif;
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        border: 3px solid rgb(130, 162, 232);">
+        border: 4px solid rgb(130, 162, 232);">
 
 
         <!-- Question text -->
