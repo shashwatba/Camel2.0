@@ -1,21 +1,25 @@
-from dotenv import load_dotenv
 import os
+import json
+from datetime import datetime
+from dotenv import load_dotenv
 from openai import OpenAI
 
+# load .env file OPENAI_API_KEY=
 load_dotenv()
 
 # key input will be the keywords given from history and initializtion
+# probably more like 'topic'
 key_input = "SQL"
 
-# hump type is the size of obstacle
-hump_type = "med"
+# Hump type is the size of obstacle: big - med - small
+hump_type = "big"
 
 if hump_type == "big":
-    hump_inst = "If the user doesn't get it correct, create another quiz question."
+    hump_inst = "The question should be hard difficult and take some thought to solve. Give some context for the question."
 elif hump_type == "med":
-    hump_inst = "If the user doesn't get it correct, create a detailed response. Tell them to wait 2 minutes before moving on."
+    hump_inst = "The question should be medium difficulty."
 elif hump_type == "small":
-    hump_inst = "If the user doesn't get it correct. Give a kind response and say that we'll work on it."
+    hump_inst = "The question should be simple."
 
 # 🔐 Load API key (or set it directly here)
 client = OpenAI()
@@ -31,7 +35,7 @@ correct should be the letter of the correct answer (A,B,C,D).
 """
 
 # 💬 User question
-user_input = "How do I find the top 5 customers by total order amount in SQL?"
+user_input = "I'm trying to learn {key_input}. Give me a quiz question related to this."
 
 # 🧠 Call the LLM using the modern API
 response = client.chat.completions.create(
@@ -44,6 +48,9 @@ response = client.chat.completions.create(
 )
 
 quiz_json = response.choices[0].message.content.strip()
+
+# with open("response/tutor_response_text.json", "w") as f:
+#     json.dump({"reply": quiz_json}, f, indent=2)
 
 # 🖨️ Show output
 print("=== 👩‍🏫 Tutor's Response ===")
