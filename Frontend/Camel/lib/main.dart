@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:camel/classes.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -155,13 +159,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void showSimpleCardDetail(BuildContext context, Map<String, dynamic> card) {
+  void showSimpleCardDetail(BuildContext context, SavedQuiz card) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         title: Text(
-          card['title'] ?? '',
+          card.topic,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Container(
@@ -171,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 4,
             children: [
-              TagContainer(text: card['tag'] ?? '', isForgot: false),
+              TagContainer(text: card.keyword, isForgot: false),
               SizedBox(height: 10),
               // Summary 강조용 박스
               Container(
@@ -180,25 +184,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Colors.yellow[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  card['summary']?.split('\n').first ?? '',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
               ),
 
               SizedBox(height: 10),
 
-              // 본문 내용
-              Text(
-                card['summary']?.split('\n').skip(1).join('\n') ?? '',
-                style: TextStyle(color: Colors.black87),
-              ),
-
-              SizedBox(height: 10),
-              Text(
-                card['time'] ?? '',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              ListView.builder(
+                itemCount: card.questions.length,
+                itemBuilder: (context, index) {
+                  final question = card.questions[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Q${index + 1}: ${question.text??''}",
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              )
             ],
           ),
         ),
@@ -212,6 +226,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<QuizHistoryResponse> fetchQuizHistory() async {
+    final url = Uri.parse('http://127.0.0.1:8000/quiz-history');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonBody = jsonDecode(response.body);
+      return QuizHistoryResponse.fromJson(jsonBody);
+    } else {
+      throw Exception('Failed to load quiz history');
+    }
+  }
 
 
 
@@ -231,28 +256,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text('What You Learned Today', style: sectionTitleStyle),
                   SizedBox(height: 16),
-                  SizedBox(
-                    height: 200,
-                    child: Scrollbar(
-                      controller: _scrollController,
-                      thumbVisibility: true,
-                      child: SizedBox(
-                        height: 200,
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          scrollDirection: Axis.horizontal,
-                          itemCount: whatYouLearned.length,
-                          itemBuilder: (ctx, i) {
-                            final item = whatYouLearned[i];
-                            return GestureDetector(
-                              onTap: () => showSimpleCardDetail(context, item),
-                              child: KnowledgeCard(item: item),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
+                  // SizedBox(
+                  //   height: 200,
+                  //   child: Scrollbar(
+                  //     controller: _scrollController,
+                  //     thumbVisibility: true,
+                  //     child: SizedBox(
+                  //       height: 200,
+                  //       child: ListView.builder(
+                  //         controller: _scrollController,
+                  //         scrollDirection: Axis.horizontal,
+                  //         itemCount: whatYouLearned.length,
+                  //         itemBuilder: (ctx, i) {
+                  //           final item = whatYouLearned[i];
+                  //           return GestureDetector(
+                  //             onTap: () => showSimpleCardDetail(context, item),
+                  //             child: KnowledgeCard(item: item),
+                  //           );
+                  //         },
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   SizedBox(height: 24),
                   Text('You Might Forget This', style: sectionTitleStyle),
                   SizedBox(height: 16),
@@ -263,18 +288,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       thumbVisibility: true,
                       child: SizedBox(
                         height: 200,
-                        child: ListView.builder(
-                          controller: _forgetScrollController,
-                          scrollDirection: Axis.horizontal,
-                          itemCount: youMightForget.length,
-                          itemBuilder: (ctx, i) {
-                            final item = youMightForget[i];
-                            return GestureDetector(
-                              onTap: () => showSimpleCardDetail(context, item),
-                              child: KnowledgeCard(item: item, isForgot: true,),
+                        child: FutureBuilder<QuizHistoryResponse>(
+                          future: fetchQuizHistory(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData) {
+                              return const Center(child: Text('No items found'));
+                            }
+
+                            final quizzes = snapshot.data!.quizzes;
+
+
+
+                            return ListView.builder(
+                              controller: _forgetScrollController,
+                              scrollDirection: Axis.horizontal,
+                              itemCount: quizzes.length,
+                              itemBuilder: (ctx, i) {
+                                final item = quizzes[i];
+                                return GestureDetector(
+                                  onTap: () => showSimpleCardDetail(context, item),
+                                  child: KnowledgeCard(item: item, isForgot: true),
+                                );
+                              },
                             );
                           },
                         ),
+
                       ),
                     ),
                   ),
@@ -347,7 +390,7 @@ class KnowledgeCard extends StatelessWidget {
     this.isForgot = false,
   });
 
-  final Map<String, dynamic> item;
+  final SavedQuiz item;
   final bool isForgot;
 
   @override
@@ -363,14 +406,14 @@ class KnowledgeCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              item['title'] ?? '',
+              item.topic,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            TagContainer(text: item['tag']?? '', isForgot: isForgot),
+            TagContainer(text: item.keyword, isForgot: isForgot),
             Spacer(),
             Text(
-              item['time'] ?? '',
+              item.generatedAt,
               style: TextStyle(color: Colors.grey[800], fontSize: 12),
             ),
           ],
@@ -408,3 +451,6 @@ class TagContainer extends StatelessWidget {
     );
   }
 }
+
+
+
