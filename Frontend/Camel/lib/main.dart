@@ -358,7 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                             final oldQuizzes = quizzes.where((item) {
                               final generatedDate = DateTime.parse(item.generatedAt).toLocal();
-                              return generatedDate.day == today.day;
+                              return generatedDate.day != today.day;
                             }).toList();
 
                             return ListView.builder(
@@ -406,8 +406,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: Colors.white,
                         child: ListView(
                           children: [
-                            Text('Q: What is fixed point combinator?', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('A: It is a way to achieve recursion in lambda calculus without naming functions.'),
+                            Text('Q: What are the types of guitar pickups?', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('A: The main types are single-coil pickups, known for their bright and clear sound, and humbucker pickups, which produce a thicker, warmer tone and reduce electrical noise.'),
                           ],
                         ),
                       ),
