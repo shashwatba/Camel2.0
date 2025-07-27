@@ -1,6 +1,6 @@
 # 🐫 Camel: Browser Plugin to Learn Instead of Lookup
 
-Camel is a browser extension that intercepts your AI-related queries and turns them into *teachable moments*.
+**Camel** is a browser extension that intercepts your AI-related queries and turns them into *teachable moments*.
 
 Instead of giving you direct answers from ChatGPT, Bard, or other LLMs, CamelTutor asks questions back, coaches you through the concepts (e.g., SQL, Python, ML), and helps you grow your skills.
 
@@ -24,7 +24,7 @@ Instead of giving you direct answers from ChatGPT, Bard, or other LLMs, CamelTut
    - Sends the query to your local LLM prompt engine (via OpenAI API)
    - Applies a system prompt like:
      > _"Act as a tutor. Ask me a question about this topic first before answering."_
-3. The plugin replaces your request with a quiz, explanation, or suggestion to pause and reflect.
+3. The plugin **replaces your request with a quiz, explanation, or suggestion** to pause and reflect.
 
 ---
 
@@ -43,6 +43,7 @@ CamelTutor responds:
 - Python 3.8+
 - `openai>=1.0.0`
 - `python-dotenv`
+- `httpx < 0.28.1`
 - Chrome or Chromium-based browser
 - `manifest.json`-based browser extension loader
 
@@ -53,14 +54,33 @@ CamelTutor responds:
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/your-username/CamelTutor.git
-cd CamelTutor
+git clone https://github.com/shashwatba/Camel2.0.git
+cd Camel2.0
 ```
 
 
+### 2. Run Backend
+
+```bash
+pip install openai python-dotenv uvicorn
+uvicorn fastapiserver:app --reload
+```
+
+### 3. Run Frontend
+
+```bash
+flutter run
+```
+
+### 4. Activate Extension
+
+```Planetext
+go to chrome://extensions
+turn on dev mode, load unzipped extension
+select extension folder in this repo
+```
+
 Made for Forgehack 2025 by Shashwat Bansal, Pranati Gupta, Alexis Manyrath, Jun Park
 
-[Presentation](https://www.canva.com/design/DAGuS_HZzqE/3qBnQUgEkx6IcHFpBOdP_g/edit?utm_content=DAGuS_HZzqE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
-[Notion](https://www.notion.so/Project-Overview-23c76236c50580fdb14bdf83304c6f8e)
-
-
+[Presentation](https://www.canva.com/design/DAGuS_HZzqE/3qBnQUgEkx6IcHFpBOdP_g/edit?utm_content=DAGuS_HZzqE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)  
+[Video Demo](https://www.youtube.com/watch?v=jBxNTbxxqyM)
