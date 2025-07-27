@@ -144,3 +144,5 @@ I would love to hear any thoughts!
 ---
 
 **Ready to learn smarter, not harder?** Install Camel today and turn your web browsing into a powerful learning tool! 🐪✨
+
+Built for Forgehacks2025 by Shashwat Bansal, Mahi Gupta, Alexis Manyrath, and Jun Park
