@@ -14,6 +14,8 @@ async function initializeTracking() {
         isTracking = true;
         trackingData = response.topics;
         
+        console.log('Tracking initialized with topics:', trackingData);
+        
         // Start scanning the page
         scanPageForKeywords();
         
@@ -41,6 +43,7 @@ function checkTextForKeywords(text) {
     
     const lowerText = text.toLowerCase();
     
+    // Fix: trackingData is an array, and each item has 'name' property
     trackingData.forEach(topicData => {
         topicData.keywords.forEach(keyword => {
             // Create a regex for whole word matching
@@ -49,15 +52,20 @@ function checkTextForKeywords(text) {
             
             const matches = lowerText.match(regex);
             if (matches && matches.length > 0) {
-                // Notify background script about keyword found
+                console.log(`Found keyword "${keyword}" ${matches.length} times in topic "${topicData.name}"`);
+                
+                // Get quiz format from storage
                 chrome.storage.local.get(['quizFormat'], (result) => {
-                const selectedFormat = result.quizFormat || 'multiple-choice';
-                chrome.runtime.sendMessage({
-                    action: 'keywordFound',
-                    topic: topicData.name,
-                    keyword: keyword,
-                    count: matches.length,
-                    format: selectedFormat
+                    const selectedFormat = result.quizFormat || 'multiple-choice';
+                    
+                    // Notify background script about keyword found
+                    chrome.runtime.sendMessage({
+                        action: 'keywordFound',
+                        topic: topicData.name, // Now this will work correctly
+                        keyword: keyword,
+                        count: matches.length,
+                        format: selectedFormat
+                    });
                 });
             }
         });
